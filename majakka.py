@@ -105,7 +105,7 @@ def PyoritaMoottoria(portit, suunta, odota):
         sleep(odota)
 
 
-def Pyorita(suunta, nopeus, portit, aika, satunnainenVari, satunnainenNopeus, satunnainenSuunta):
+def Pyorita(bstick, portit, suunta, nopeus, vari, aika, satunnainenVari, satunnainenNopeus, satunnainenSuunta):
 
     jatka = True
     kaytettyAika = 0
@@ -115,6 +115,8 @@ def Pyorita(suunta, nopeus, portit, aika, satunnainenVari, satunnainenNopeus, sa
 
     if(nopeus == 10):
         nopeus = 4
+
+    ValotPaalle(bstick, vari.value)
 
     while jatka:
         try:
@@ -148,78 +150,81 @@ def Pyorita(suunta, nopeus, portit, aika, satunnainenVari, satunnainenNopeus, sa
         # press ctrl+c for keyboard interrupt
         except KeyboardInterrupt:
             jatka = False
-
-
-# assign GPIO pins for motor
-mooottori_portit = (29, 31, 33, 35)
-GPIO.setwarnings(False)
-GPIO.setmode(GPIO.BOARD)
-# for defining more than 1 GPIO channel as input/output use
-GPIO.setup(mooottori_portit, GPIO.OUT)
-
-
-ledPorttiPunainen = int(10)
-ledPorttiVihrea = int(12)
-GPIO.setup(ledPorttiPunainen, GPIO.OUT)
-GPIO.setup(ledPorttiVihrea, GPIO.OUT)
-
-# valitse suunta
-if len(sys.argv) > 1 and (sys.argv[1] == "v" or sys.argv[1] == "m" or sys.argv[1] == "s"):
-    suuntaVastaus = sys.argv[1]
-else:
-    suuntaVastaus = input(
-        'Valitse pyörimissuunta v=vastapäivään, m=myötäpäivään, s = satunnainen: ')
-
-satunnainenSuunta = False
-
-if suuntaVastaus == "s":
-    satunnainenSuunta = True
-
-if suuntaVastaus == "v":
-    suunta = Suunta.Vastapaivaan
-else:
-    suunta = Suunta.Myotapaivaan
-
-# valitse nopeus
-nopeus = None
-if len(sys.argv) > 2 and (sys.argv[2].isdigit()):
-    nopeusArg = int(sys.argv[2])
-    if nopeusArg >= 0 and nopeusArg <= 10:
-        nopeus = nopeusArg
-
-if nopeus == None:
-    nopeus = LueNumero(
-        input('Valitse nopeus (0-9) 0=paikallaan, 9=nopea:, 10=satunnainen '))
-
-# valitse väri
-if len(sys.argv) > 3:
-    variVastaus = sys.argv[3]
-else:
-    variVastaus = input(
-        'Valitse väri sat=satunnainen, v=vihreä, s=sininen, k=keltainen, p=punainen:, <Enter> valkoinen: ')
-
-satunnainenVari = False
-if variVastaus == "sat":
-    satunnainenVari = True
-
-if variVastaus == "v":
-    vari = Vari.Vihrea
-elif variVastaus == "s":
-    vari = Vari.Sininen
-elif variVastaus == "k":
-    vari = Vari.Keltainen
-elif variVastaus == "p":
-    vari = Vari.Punainen
-else:
-    vari = Vari.Valkoinen
-
-bstick = blinkstick.find_first()
-if (bstick is None or nopeus is None):
-    VilkutaLed(ledPorttiPunainen, ledPorttiVihrea, 7)
-else:
-    ValotPaalle(bstick, vari.value)
-
-    Pyorita(suunta, nopeus, mooottori_portit,
-            1000, satunnainenVari, nopeus == 10, satunnainenSuunta)
-
+    
     ValotPois(bstick)
+
+
+def OhjaaMajakkaa():
+    mooottori_portit = (29, 31, 33, 35)
+    GPIO.setwarnings(False)
+    GPIO.setmode(GPIO.BOARD)
+    GPIO.setup(mooottori_portit, GPIO.OUT)
+
+    ledPorttiPunainen = 10
+    ledPorttiVihrea = 12
+    GPIO.setup(ledPorttiPunainen, GPIO.OUT)
+    GPIO.setup(ledPorttiVihrea, GPIO.OUT)
+
+    # valitse suunta
+    if len(sys.argv) > 1 and (sys.argv[1] == "v" or sys.argv[1] == "m" or sys.argv[1] == "s"):
+        suuntaVastaus = sys.argv[1]
+    else:
+        suuntaVastaus = input(
+            'Valitse pyörimissuunta v=vastapäivään, m=myötäpäivään, s = satunnainen: ')
+
+    satunnainenSuunta = False
+    if suuntaVastaus == "s":
+        satunnainenSuunta = True
+
+    if suuntaVastaus == "v":
+        suunta = Suunta.Vastapaivaan
+    else:
+        suunta = Suunta.Myotapaivaan
+
+    # valitse nopeus
+    nopeus = None
+    if len(sys.argv) > 2 and (sys.argv[2].isdigit()):
+        nopeusArg = int(sys.argv[2])
+        if nopeusArg >= 0 and nopeusArg <= 10:
+            nopeus = nopeusArg
+
+    if nopeus == None:
+        nopeus = LueNumero(
+            input('Valitse nopeus (0-9) 0=paikallaan, 9=nopea:, 10=satunnainen '))
+
+    # valitse väri
+    if len(sys.argv) > 3:
+        variVastaus = sys.argv[3]
+    else:
+        variVastaus = input(
+            'Valitse väri sat=satunnainen, v=vihreä, s=sininen, k=keltainen, p=punainen:, <Enter> valkoinen: ')
+
+    satunnainenVari = False
+    if variVastaus == "sat":
+        satunnainenVari = True
+
+    if variVastaus == "v":
+        vari = Vari.Vihrea
+    elif variVastaus == "s":
+        vari = Vari.Sininen
+    elif variVastaus == "k":
+        vari = Vari.Keltainen
+    elif variVastaus == "p":
+        vari = Vari.Punainen
+    else:
+        vari = Vari.Valkoinen
+
+    #etsi valo
+    bstick = blinkstick.find_first()
+    if (bstick is None or nopeus is None):
+        VilkutaLed(ledPorttiPunainen, ledPorttiVihrea, 7)
+    else:
+        Pyorita(bstick, mooottori_portit, suunta, nopeus, vari, 
+                1000, satunnainenVari, nopeus == 10, satunnainenSuunta)
+
+
+def Aloita():
+    OhjaaMajakkaa()
+
+if __name__ == "__main__":
+    Aloita()
