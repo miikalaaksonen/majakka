@@ -3,6 +3,7 @@ from time import sleep
 from enum import Enum
 import sys
 import time
+import random
 from blinkstick import blinkstick
 
 
@@ -17,6 +18,11 @@ class Vari(Enum):
     Punainen = "FF0000"
     Vihrea = "008000"
     Valkoinen = "FFFFFF"
+    Purppura = "800080"
+    Laivasto = "000080"
+    Vesi = "00FFFF"
+    Lime = "00FF00"
+    Harmaa = "808080"
 
 
 def LueNumero(teksti):
@@ -69,43 +75,73 @@ def ValotPois(bstick):
         bstick.set_color(channel=0, index=x, red=0, green=0, blue=0)
 
 
-def PyoritaMoottoria(suunta, nopeus, portit, aika):
-    odota = (10-float(nopeus))/700
+def PyoritaMoottoria(portit, suunta, odota):
+    if(suunta == Suunta.Myotapaivaan):
+        GPIO.output(portit, (GPIO.HIGH,
+                             GPIO.LOW, GPIO.LOW, GPIO.HIGH))
+        sleep(odota)
+        GPIO.output(portit, (GPIO.HIGH,
+                             GPIO.HIGH, GPIO.LOW, GPIO.LOW))
+        sleep(odota)
+        GPIO.output(portit, (GPIO.LOW,
+                             GPIO.HIGH, GPIO.HIGH, GPIO.LOW))
+        sleep(odota)
+        GPIO.output(portit, (GPIO.LOW,
+                             GPIO.LOW, GPIO.HIGH, GPIO.HIGH))
+        sleep(odota)
+
+    elif(suunta == Suunta.Vastapaivaan):
+        GPIO.output(portit, (GPIO.HIGH,
+                             GPIO.LOW, GPIO.LOW, GPIO.HIGH))
+        sleep(odota)
+        GPIO.output(portit, (GPIO.LOW,
+                             GPIO.LOW, GPIO.HIGH, GPIO.HIGH))
+        sleep(odota)
+        GPIO.output(portit, (GPIO.LOW,
+                             GPIO.HIGH, GPIO.HIGH, GPIO.LOW))
+        sleep(odota)
+        GPIO.output(portit, (GPIO.HIGH,
+                             GPIO.HIGH, GPIO.LOW, GPIO.LOW))
+        sleep(odota)
+
+
+def Pyorita(suunta, nopeus, portit, aika, satunnainenVari, satunnainenNopeus, satunnainenSuunta):
+
     jatka = True
     kaytettyAika = 0
+    varimuutosAika = 0
+    nopeusmuutosAika = 0
+    suuntamuutosAika = 0
+
+    if(nopeus == 10):
+        nopeus = 4
+
     while jatka:
         try:
+            if(satunnainenVari and (varimuutosAika + 3 < kaytettyAika)):
+                varilista = list(map(lambda c: c.value, Vari))
+                random.shuffle(varilista)
+                ValotPaalle(bstick, varilista[0])
+                varimuutosAika = kaytettyAika
+
+            if(satunnainenNopeus and (nopeusmuutosAika + 3 < kaytettyAika)):
+                nopeus = random.randint(1, 9)
+                nopeusmuutosAika = kaytettyAika
+
+            if(satunnainenSuunta and (suuntamuutosAika + 3 < kaytettyAika)):
+                suuntalista = list(map(lambda c: c, Suunta))
+                random.shuffle(suuntalista)
+                suunta = suuntalista[0]
+                suuntamuutosAika = kaytettyAika
+
+            odota = (10-float(nopeus))/700
+
             if nopeus == 0:
                 sleep(0.1)
             else:
-                if(suunta == Suunta.Myotapaivaan):
-                    GPIO.output(portit, (GPIO.HIGH,
-                                         GPIO.LOW, GPIO.LOW, GPIO.HIGH))
-                    sleep(odota)
-                    GPIO.output(portit, (GPIO.HIGH,
-                                         GPIO.HIGH, GPIO.LOW, GPIO.LOW))
-                    sleep(odota)
-                    GPIO.output(portit, (GPIO.LOW,
-                                         GPIO.HIGH, GPIO.HIGH, GPIO.LOW))
-                    sleep(odota)
-                    GPIO.output(portit, (GPIO.LOW,
-                                         GPIO.LOW, GPIO.HIGH, GPIO.HIGH))
-                    sleep(odota)
-
-                elif(suunta == Suunta.Vastapaivaan):
-                    GPIO.output(portit, (GPIO.HIGH,
-                                         GPIO.LOW, GPIO.LOW, GPIO.HIGH))
-                    sleep(odota)
-                    GPIO.output(portit, (GPIO.LOW,
-                                         GPIO.LOW, GPIO.HIGH, GPIO.HIGH))
-                    sleep(odota)
-                    GPIO.output(portit, (GPIO.LOW,
-                                         GPIO.HIGH, GPIO.HIGH, GPIO.LOW))
-                    sleep(odota)
-                    GPIO.output(portit, (GPIO.HIGH,
-                                         GPIO.HIGH, GPIO.LOW, GPIO.LOW))
-                    sleep(odota)
+                PyoritaMoottoria(portit, suunta, odota)
                 kaytettyAika = kaytettyAika + (odota * 4)
+
                 if kaytettyAika >= aika:
                     jatka = False
 
@@ -128,16 +164,19 @@ GPIO.setup(ledPorttiPunainen, GPIO.OUT)
 GPIO.setup(ledPorttiVihrea, GPIO.OUT)
 
 # valitse suunta
-if len(sys.argv) > 1 and (sys.argv[1] == "v" or sys.argv[1] == "m"):
+if len(sys.argv) > 1 and (sys.argv[1] == "v" or sys.argv[1] == "m" or sys.argv[1] == "s"):
     suuntaVastaus = sys.argv[1]
 else:
     suuntaVastaus = input(
-        'Valitse pyörimissuunta v=vastapäivään, m=myötäpäivään: ')
+        'Valitse pyörimissuunta v=vastapäivään, m=myötäpäivään, s = satunnainen: ')
+
+satunnainenSuunta = False
+
+if suuntaVastaus == "s":
+    satunnainenSuunta = True
 
 if suuntaVastaus == "v":
     suunta = Suunta.Vastapaivaan
-elif suuntaVastaus == "m":
-    suunta = Suunta.Myotapaivaan
 else:
     suunta = Suunta.Myotapaivaan
 
@@ -145,18 +184,23 @@ else:
 nopeus = None
 if len(sys.argv) > 2 and (sys.argv[2].isdigit()):
     nopeusArg = int(sys.argv[2])
-    if nopeusArg > 0 and nopeusArg < 10:
+    if nopeusArg >= 0 and nopeusArg <= 10:
         nopeus = nopeusArg
 
 if nopeus == None:
-    nopeus = LueNumero(input('Valitse nopeus (0-9) 0=paikallaan, 9=nopea: '))
+    nopeus = LueNumero(
+        input('Valitse nopeus (0-9) 0=paikallaan, 9=nopea:, 10=satunnainen '))
 
 # valitse väri
 if len(sys.argv) > 3:
     variVastaus = sys.argv[3]
 else:
     variVastaus = input(
-        'Valitse väri v=vihreä, s=sininen, k=keltainen, p=punainen:, <Enter> valkoinen: ')
+        'Valitse väri sat=satunnainen, v=vihreä, s=sininen, k=keltainen, p=punainen:, <Enter> valkoinen: ')
+
+satunnainenVari = False
+if variVastaus == "sat":
+    satunnainenVari = True
 
 if variVastaus == "v":
     vari = Vari.Vihrea
@@ -174,6 +218,8 @@ if (bstick is None or nopeus is None):
     VilkutaLed(ledPorttiPunainen, ledPorttiVihrea, 7)
 else:
     ValotPaalle(bstick, vari.value)
-    PyoritaMoottoria(suunta, nopeus, mooottori_portit, 1000)
+
+    Pyorita(suunta, nopeus, mooottori_portit,
+            1000, satunnainenVari, nopeus == 10, satunnainenSuunta)
 
     ValotPois(bstick)
