@@ -159,9 +159,6 @@ def Pyorita(bstick, portit, suunta, nopeus, vari, aika, satunnainenVari, satunna
         except KeyboardInterrupt:
             jatka = False
     
-    ledPorttiPunainen = 10
-    ledPorttiVihrea = 12
-    PunainenLed(ledPorttiPunainen, ledPorttiVihrea, 7)
     ValotPois(bstick)
 
 
@@ -238,6 +235,8 @@ def OhjaaMajakkaa():
         VihreaLed(ledPorttiPunainen, ledPorttiVihrea, 7)
         Pyorita(bstick, mooottori_portit, suunta, nopeus, vari, 
                 1000, satunnainenVari, nopeus == 10, satunnainenSuunta)
+
+    PunainenLed(ledPorttiPunainen, ledPorttiVihrea, 7)
 
 
 def Aloita():
