@@ -50,6 +50,14 @@ def VilkutaLed(portti1, portti2, nopeus):
             GPIO.output(portti2, GPIO.LOW)
             jatka = False
 
+def VihreaLed(portti1, portti2, nopeus):
+            GPIO.output(portti1, GPIO.HIGH)
+            GPIO.output(portti2, GPIO.LOW)
+
+def PunainenLed(portti1, portti2, nopeus):
+            GPIO.output(portti2, GPIO.HIGH)
+            GPIO.output(portti1, GPIO.LOW)
+
 
 def HTMLColorToRGB(colorstring):
     """ convert #RRGGBB to an (R, G, B) tuple """
@@ -151,6 +159,9 @@ def Pyorita(bstick, portit, suunta, nopeus, vari, aika, satunnainenVari, satunna
         except KeyboardInterrupt:
             jatka = False
     
+    ledPorttiPunainen = 10
+    ledPorttiVihrea = 12
+    PunainenLed(ledPorttiPunainen, ledPorttiVihrea, 7)
     ValotPois(bstick)
 
 
@@ -164,6 +175,8 @@ def OhjaaMajakkaa():
     ledPorttiVihrea = 12
     GPIO.setup(ledPorttiPunainen, GPIO.OUT)
     GPIO.setup(ledPorttiVihrea, GPIO.OUT)
+
+    PunainenLed(ledPorttiPunainen, ledPorttiVihrea, 7)
 
     # valitse suunta
     if len(sys.argv) > 1 and (sys.argv[1] == "v" or sys.argv[1] == "m" or sys.argv[1] == "s"):
@@ -191,6 +204,8 @@ def OhjaaMajakkaa():
     if nopeus == None:
         nopeus = LueNumero(
             input('Valitse nopeus (0-9) 0=paikallaan, 9=nopea:, 10=satunnainen '))
+        if nopeus == None:
+            nopeus = 10
 
     # valitse väri
     if len(sys.argv) > 3:
@@ -216,9 +231,11 @@ def OhjaaMajakkaa():
 
     #etsi valo
     bstick = blinkstick.find_first()
+    #bstick = None
     if (bstick is None or nopeus is None):
         VilkutaLed(ledPorttiPunainen, ledPorttiVihrea, 7)
     else:
+        VihreaLed(ledPorttiPunainen, ledPorttiVihrea, 7)
         Pyorita(bstick, mooottori_portit, suunta, nopeus, vari, 
                 1000, satunnainenVari, nopeus == 10, satunnainenSuunta)
 
