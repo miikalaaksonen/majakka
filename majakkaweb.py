@@ -5,6 +5,7 @@ import socket
 import sys
 import fcntl
 import struct
+import os
 
 
 class GetHandler(BaseHTTPRequestHandler):
@@ -41,6 +42,9 @@ class GetHandler(BaseHTTPRequestHandler):
             f = open('index.html', 'r')
             message = f.read()
 
+        if polku == "/aloita":
+            os.system('sudo python3 majakka.py s 10 sat')
+
         self.send_response(200)
         self.end_headers()
         self.wfile.write(bytes(message, 'utf-8'))
@@ -62,16 +66,16 @@ if __name__ == '__main__':
         else:
             port = 80
 
+        httpd = socketserver.TCPServer(("", port), GetHandler)
+
         local_ip = IpHandler().get_ip_address('wlan0')
+        osoite = "http://"+local_ip
 
-        with socketserver.TCPServer(("", port), GetHandler) as httpd:
-            osoite = "http://"+local_ip
+        if port != 80:
+            osoite = osoite + ":" + str(port)
 
-            if port != 80:
-                osoite = osoite + ":" + str(port)
-
-            print("Majakka-palvelin osoitteessa " + osoite)
-            httpd.serve_forever()
+        print("Majakka-palvelin osoitteessa " + osoite)
+        httpd.serve_forever()
 
     # Stopped the server
     except KeyboardInterrupt:
